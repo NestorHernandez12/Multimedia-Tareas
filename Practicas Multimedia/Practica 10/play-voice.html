@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STT + TTS</title>
+
+<style>
+
+body{
+font-family: Arial;
+max-width:500px;
+margin:60px auto;
+text-align:center;
+background:#f0f4f8;
+}
+
+textarea{
+width:100%;
+height:150px;
+padding:10px;
+font-size:16px;
+border-radius:8px;
+border:2px solid #ccc;
+resize:none;
+}
+
+button{
+margin-top:20px;
+padding:12px;
+font-size:18px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+background:#4CAF50;
+color:white;
+width:100%;
+}
+
+button:hover{
+opacity:0.85;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>🎤 Voz a Texto + Audio</h2>
+
+<textarea id="input-area" placeholder="Presiona escuchar y habla..."></textarea>
+
+<button onclick="listen()">🎤 Escuchar</button>
+
+<button onclick="speak()">▶ Play</button>
+
+
+<script>
+
+const synth = window.speechSynthesis;
+
+
+/* SPEECH TO TEXT */
+
+function listen(){
+
+var recognition = new webkitSpeechRecognition();
+
+recognition.lang="es-ES";
+
+recognition.start();
+
+recognition.onresult=function(event){
+
+let texto=event.results[0][0].transcript;
+
+document.getElementById("input-area").value=texto;
+
+}
+
+}
+
+
+/* TEXT TO SPEECH */
+
+function speak(){
+
+let texto=document.getElementById("input-area").value;
+
+if(texto=="") return;
+
+
+let utterance=new SpeechSynthesisUtterance(texto);
+
+
+/* VALORES FIJOS */
+
+utterance.lang="es-ES";
+
+utterance.rate=1;   // velocidad fija
+
+utterance.pitch=1;  // tono fijo
+
+
+synth.cancel();
+
+synth.speak(utterance);
+
+}
+
+
+</script>
+
+</body>
+</html>
