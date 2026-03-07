@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Pixy Voice Assistant - DB Theory</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a2e; color: white; text-align: center; padding-top: 50px; }
+        .assistant-container { background: #16213e; width: 400px; margin: 0 auto; padding: 30px; border-radius: 20px; border: 2px solid #0f3460; box-shadow: 0 0 20px rgba(0,255,255,0.2); }
+        .orb { width: 100px; height: 100px; background: #e94560; border-radius: 50%; margin: 20px auto; transition: 0.5s; box-shadow: 0 0 10px #e94560; }
+        .listening { transform: scale(1.2); background: #00d2ff; box-shadow: 0 0 30px #00d2ff; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        #display-text { font-style: italic; color: #95a5a6; margin-top: 20px; min-height: 50px; }
+        button { background: #0f3460; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="assistant-container">
+    <h2>Pixy DB Assistant</h2>
+    <div id="visual-orb" class="orb"></div>
+    <div id="status">Haz clic para iniciar</div>
+    <div id="display-text">"Di: hola..."</div>
+    <br>
+    <button onclick="initPixy()">Iniciar Micrófono</button>
+</div>
+
+<script>
+const synth = window.speechSynthesis;
+const visualOrb = document.getElementById("visual-orb");
+const statusTxt = document.getElementById("status");
+const displayTxt = document.getElementById("display-text");
+
+// Diccionario de Teoría de Bases de Datos
+const teoriaBD = {
+    "modelo relacional": "El modelo relacional representa los datos como una colección de tablas, donde cada tabla tiene un nombre único y filas llamadas tuplas.",
+    "normalización": "La normalización es el proceso de organizar los datos para evitar la redundancia y asegurar la integridad referencial. Se divide en formas normales como 1FN, 2FN y 3FN.",
+    "llave primaria": "Una llave primaria es un atributo o conjunto de atributos que identifica de manera única a cada registro en una tabla. No puede ser nula.",
+    "llave foránea": "Es un campo en una tabla que se vincula con la llave primaria de otra tabla, estableciendo una relación entre ambas.",
+    "ácid": "ACID es un conjunto de propiedades que garantizan que las transacciones en una base de datos sean confiables: Atomicidad, Consistencia, Aislamiento y Durabilidad.",
+    "sql": "SQL es el lenguaje estructurado de consulta diseñado para administrar y recuperar información de sistemas de gestión de bases de datos relacionales."
+};
+
+let isPixyActive = false;
+
+const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+recognition.lang = "es-MX";
+recognition.continuous = true;
+recognition.interimResults = false;
+
+function initPixy() {
+    recognition.start();
+    statusTxt.innerText = "Escuchando palabra de activación...";
+    visualOrb.style.background = "#e94560"; // Rojo: espera
+}
+
+recognition.onresult = (event) => {
+    const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+    displayTxt.innerText = `Escuché: "${transcript}"`;
+
+    // 1. Detectar activación
+    if (transcript.includes("hola") && !isPixyActive) {
+        activatePixy();
+    } 
+    // 2. Si ya está activa, buscar el tema en el diccionario
+    else if (isPixyActive) {
+        processCommand(transcript);
+    }
+};
+
+function activatePixy() {
+    isPixyActive = true;
+    visualOrb.classList.add("listening");
+    statusTxt.innerText = "Pixy Activa";
+    speak("Hola, ¿Qué necesitas saber sobre teoría de bases de datos?");
+}
+
+function processCommand(text) {
+    let found = false;
+    
+    // Recorremos el diccionario para ver si el usuario mencionó algún concepto
+    for (const concepto in teoriaBD) {
+        if (text.includes(concepto)) {
+            speak(teoriaBD[concepto]);
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        speak("Lo siento, no tengo información sobre ese concepto. Intenta con Normalización o Modelo Relacional.");
+    }
+
+    // Volver a estado de espera después de responder
+    isPixyActive = false;
+    visualOrb.classList.remove("listening");
+    statusTxt.innerText = "Esperando de nuevo por: Pixy";
+}
+
+function speak(message) {
+    // Pausamos reconocimiento para que no se auto-escuche
+    recognition.stop();
+    
+    const utterance = new SpeechSynthesisUtterance(message);
+    utterance.lang = "es-MX";
+    utterance.rate = 1.0;
+
+    utterance.onend = () => {
+        recognition.start(); // Re-inicia la escucha al terminar de hablar
+    };
+
+    synth.cancel();
+    synth.speak(utterance);
+}
+
+// Reiniciar si el servicio se detiene por error
+recognition.onend = () => {
+    if(statusTxt.innerText !== "Haz clic para iniciar") recognition.start();
+};
+
+</script>
+</body>
+</html>
